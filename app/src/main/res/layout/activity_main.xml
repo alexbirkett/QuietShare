@@ -10,12 +10,18 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="no.birkett.quietshare.MainActivity">
 
+    <Spinner
+        android:id="@+id/profile"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"></Spinner>
+
     <EditText
         android:id="@+id/send_message"
         android:gravity="top"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         tools:text="Message to send"
+        android:layout_below="@id/profile"
         android:minLines="3"/>
 
     <Button
@@ -42,5 +48,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Receive" />
+
 
 </RelativeLayout>

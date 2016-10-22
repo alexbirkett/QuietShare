@@ -8,13 +8,20 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Iterator;
 
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.quietmodem.Quiet.*;
 
 public class MainActivity extends AppCompatActivity {
@@ -23,7 +30,8 @@ public class MainActivity extends AppCompatActivity {
     private FrameTransmitter transmitter;
     private TextView receivedContent;
     private EditText sendMessage;
-    private static final String PROFILE = "audible-7k-channel-0";
+    private Spinner profileSpinner;
+    private ArrayAdapter<String> spinnerArrayAdapter;
     
     private static final int MY_PERMISSIONS_REQUEST_RECORD_AUDIO = 1;
 
@@ -34,7 +42,7 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.send).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                send();
+                handleSendClick();
             }
         });
         findViewById(R.id.receive).setOnClickListener(new View.OnClickListener() {
@@ -45,6 +53,8 @@ public class MainActivity extends AppCompatActivity {
         });
         receivedContent = (TextView) findViewById(R.id.received_content);
         sendMessage = (EditText) findViewById(R.id.send_message);
+        profileSpinner = (Spinner) findViewById(R.id.profile);
+        setupProfileSpinner();
         setupTransmitter();
     }
 
@@ -69,8 +79,7 @@ public class MainActivity extends AppCompatActivity {
         FrameTransmitterConfig transmitterConfig;
         try {
             transmitterConfig = new FrameTransmitterConfig(
-                    this,
-                    PROFILE);
+                    this,getProfile());
 
             transmitter = new FrameTransmitter(transmitterConfig);
         } catch (IOException e) {
@@ -82,7 +91,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void setupReceiver() {
         try {
-            FrameReceiverConfig receiverConfig = new FrameReceiverConfig(this, PROFILE);
+            FrameReceiverConfig receiverConfig = new FrameReceiverConfig(this, getProfile());
             receiver = new FrameReceiver(receiverConfig);
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -101,6 +110,13 @@ public class MainActivity extends AppCompatActivity {
         } else {
             receive();
         }
+    }
+
+    private void handleSendClick() {
+        if (transmitter == null) {
+            setupTransmitter();
+        }
+        send();
     }
 
     private void receive() {
@@ -142,4 +158,47 @@ public class MainActivity extends AppCompatActivity {
         Toast toast = Toast.makeText(context, R.string.missing_audio_permission, duration);
         toast.show();
     }
-}
+
+    private ArrayList<String> getProfiles() {
+        ArrayList<String> profiles = new ArrayList<>();
+        try {
+            String json = FrameTransmitterConfig.getDefaultProfiles(this);
+            JSONObject jsonObject = new JSONObject(json);
+            Iterator<String> iterator = jsonObject.keys();
+
+            while(iterator.hasNext()) {
+                profiles.add(iterator.next());
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
+        return profiles;
+    }
+
+    private void setupProfileSpinner() {
+        final ArrayList<String> profiles = getProfiles();
+        spinnerArrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, profiles);
+        profileSpinner.setAdapter(spinnerArrayAdapter);
+
+        profileSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                transmitter = null;
+                receiver = null;
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                transmitter = null;
+                receiver = null;
+            }
+        });
+
+    }
+
+    private String getProfile() {
+       return spinnerArrayAdapter.getItem(profileSpinner.getSelectedItemPosition());
+    }
+ }
