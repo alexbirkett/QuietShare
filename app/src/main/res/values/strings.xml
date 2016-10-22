@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">QuietShare</string>
+    <string name="missing_audio_permission">Access to microphone required to receive messages</string>
 </resources>
