@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -19,10 +20,14 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.concurrent.Callable;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.quietmodem.Quiet.*;
+
+import bolts.Continuation;
+import bolts.Task;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -33,6 +38,7 @@ public class MainActivity extends AppCompatActivity {
     private Spinner profileSpinner;
     private ArrayAdapter<String> spinnerArrayAdapter;
     private TextView receiveStatus;
+    private Button receiveButton;
     
     private static final int MY_PERMISSIONS_REQUEST_RECORD_AUDIO = 1;
 
@@ -46,7 +52,8 @@ public class MainActivity extends AppCompatActivity {
                 handleSendClick();
             }
         });
-        findViewById(R.id.receive).setOnClickListener(new View.OnClickListener() {
+        receiveButton = (Button)findViewById(R.id.receive);
+        receiveButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 handleReceiveClick();
@@ -122,19 +129,30 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void receive() {
-        receiver.setBlocking(5, 0);
-
-        byte[] buf = new byte[1024];
-        long recvLen = 0;
-        try {
-            recvLen = receiver.receive(buf);
-            receivedContent.setText(new String(buf, Charset.forName("UTF-8")));
-            receiveStatus.setText("Received " + recvLen);
-        } catch (IOException e) {
-            receiveStatus.setText(e.toString());
-        }
-
+        receiveButton.setEnabled(false);
+        Task.callInBackground(new Callable<byte[]>() {
+            @Override
+            public byte[] call() throws Exception {
+                receiver.setBlocking(5, 0);
+                byte[] buf = new byte[1024];
+                long recvLen = 0;
+                recvLen = receiver.receive(buf);
+                return buf;
+            }
+        }).continueWith(new Continuation<byte[], Object>() {
+            @Override
+            public Object then(Task<byte[]> task) throws Exception {
+                receiveButton.setEnabled(true);
+                if (task.isFaulted()) {
+                    receiveStatus.setText("Received " + task.getError());
+                } else {
+                    receivedContent.setText(new String(task.getResult(), Charset.forName("UTF-8")));
+                }
+                return null;
+            }
+        }, Task.UI_THREAD_EXECUTOR);
     }
+
     private void send() {
         String payload = sendMessage.getText().toString();
         try {
