@@ -49,5 +49,11 @@
         android:layout_height="wrap_content"
         android:text="Receive" />
 
+    <TextView
+        android:id="@+id/receive_status"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/receive"/>
+
 
 </RelativeLayout>

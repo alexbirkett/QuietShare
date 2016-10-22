@@ -32,6 +32,7 @@ public class MainActivity extends AppCompatActivity {
     private EditText sendMessage;
     private Spinner profileSpinner;
     private ArrayAdapter<String> spinnerArrayAdapter;
+    private TextView receiveStatus;
     
     private static final int MY_PERMISSIONS_REQUEST_RECORD_AUDIO = 1;
 
@@ -54,6 +55,7 @@ public class MainActivity extends AppCompatActivity {
         receivedContent = (TextView) findViewById(R.id.received_content);
         sendMessage = (EditText) findViewById(R.id.send_message);
         profileSpinner = (Spinner) findViewById(R.id.profile);
+        receiveStatus = (TextView) findViewById(R.id.receive_status);
         setupProfileSpinner();
         setupTransmitter();
     }
@@ -127,9 +129,11 @@ public class MainActivity extends AppCompatActivity {
         try {
             recvLen = receiver.receive(buf);
             receivedContent.setText(new String(buf, Charset.forName("UTF-8")));
+            receiveStatus.setText("Received " + recvLen);
         } catch (IOException e) {
-            // read timed out
+            receiveStatus.setText(e.toString());
         }
+
     }
     private void send() {
         String payload = sendMessage.getText().toString();
@@ -199,6 +203,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private String getProfile() {
-       return spinnerArrayAdapter.getItem(profileSpinner.getSelectedItemPosition());
+        String profile = spinnerArrayAdapter.getItem(profileSpinner.getSelectedItemPosition());
+        return profile;
     }
  }
