@@ -8,6 +8,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -21,6 +22,7 @@ public class MainActivity extends AppCompatActivity {
     private FrameReceiver receiver;
     private FrameTransmitter transmitter;
     private TextView receivedContent;
+    private EditText sendMessage;
     
     private static final int MY_PERMISSIONS_REQUEST_RECORD_AUDIO = 1;
 
@@ -41,6 +43,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         receivedContent = (TextView) findViewById(R.id.received_content);
+        sendMessage = (EditText) findViewById(R.id.send_message);
         setupTransmitter();
     }
 
@@ -112,7 +115,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
     private void send() {
-        String payload = "Hello, World!";
+        String payload = sendMessage.getText().toString();
         try {
             transmitter.send(payload.getBytes());
         } catch (IOException e) {

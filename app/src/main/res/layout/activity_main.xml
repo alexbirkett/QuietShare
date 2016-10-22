@@ -10,32 +10,37 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="no.birkett.quietshare.MainActivity">
 
-    <TextView
-        android:layout_width="wrap_content"
+    <EditText
+        android:id="@+id/send_message"
+        android:gravity="top"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Received content"
-        android:id="@+id/received_content"/>
-
-    <TextView
-        android:id="@+id/status"
-        android:layout_below="@id/received_content"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-
-        android:text="Status"/>
+        tools:text="Message to send"
+        android:minLines="3"/>
 
     <Button
         android:id="@+id/send"
-        android:layout_below="@id/status"
+        android:layout_below="@id/send_message"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Send"/>
 
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="100dp"
+        android:text="Received text appears here"
+        android:id="@+id/received_content"
+        android:minLines="3"
+        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+        android:layout_below="@+id/send"
+        android:layout_alignParentStart="true" />
+
     <Button
         android:id="@+id/receive"
-        android:layout_below="@id/status"
-        android:layout_toRightOf="@id/send"
+        android:layout_below="@id/received_content"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Receive"/>
+        android:text="Receive" />
+
 </RelativeLayout>
