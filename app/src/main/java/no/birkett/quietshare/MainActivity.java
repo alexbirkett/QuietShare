@@ -23,6 +23,7 @@ public class MainActivity extends AppCompatActivity {
     private FrameTransmitter transmitter;
     private TextView receivedContent;
     private EditText sendMessage;
+    private static final String PROFILE = "audible-7k-channel-0";
     
     private static final int MY_PERMISSIONS_REQUEST_RECORD_AUDIO = 1;
 
@@ -69,7 +70,7 @@ public class MainActivity extends AppCompatActivity {
         try {
             transmitterConfig = new FrameTransmitterConfig(
                     this,
-                    "audible-7k-channel-0");
+                    PROFILE);
 
             transmitter = new FrameTransmitter(transmitterConfig);
         } catch (IOException e) {
@@ -81,7 +82,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void setupReceiver() {
         try {
-            FrameReceiverConfig receiverConfig = new FrameReceiverConfig(this, "audible-7k-channel-0");
+            FrameReceiverConfig receiverConfig = new FrameReceiverConfig(this, PROFILE);
             receiver = new FrameReceiver(receiverConfig);
         } catch (IOException e) {
             throw new RuntimeException(e);
