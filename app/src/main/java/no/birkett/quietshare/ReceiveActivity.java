@@ -3,6 +3,7 @@ package no.birkett.quietshare;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
@@ -40,6 +41,9 @@ public class ReceiveActivity extends AppCompatActivity {
         receivedContent = (TextView) findViewById(R.id.received_content);
         profileSpinner = (Spinner) findViewById(R.id.profile);
         receiveStatus = (TextView) findViewById(R.id.receive_status);
+        findViewById(R.id.receive_button).setOnClickListener(v -> {
+            startActivity(new Intent(this, TransmitActivity.class));
+        });
         setupProfileSpinner();
     }
 
