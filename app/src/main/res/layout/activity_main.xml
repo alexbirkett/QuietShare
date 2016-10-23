@@ -42,18 +42,11 @@
         android:layout_below="@+id/send"
         android:layout_alignParentStart="true" />
 
-    <Button
-        android:id="@+id/receive"
-        android:layout_below="@id/received_content"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Receive" />
-
     <TextView
         android:id="@+id/receive_status"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/receive"/>
+        android:layout_below="@+id/received_content"/>
 
 
 </RelativeLayout>

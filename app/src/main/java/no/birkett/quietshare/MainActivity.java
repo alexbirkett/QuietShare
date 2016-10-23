@@ -7,7 +7,6 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.os.Handler;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -16,9 +15,7 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.EOFException;
 import java.io.IOException;
-import java.net.SocketTimeoutException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -26,6 +23,11 @@ import java.util.Iterator;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.quietmodem.Quiet.*;
+
+import rx.Subscription;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
+import rx.subscriptions.Subscriptions;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -37,6 +39,7 @@ public class MainActivity extends AppCompatActivity {
     private Spinner profileSpinner;
     private ArrayAdapter<String> spinnerArrayAdapter;
     private TextView receiveStatus;
+    private Subscription frameSubscription = Subscriptions.empty();
 
     private static final int MY_PERMISSIONS_REQUEST_RECORD_AUDIO = 1;
 
@@ -50,18 +53,24 @@ public class MainActivity extends AppCompatActivity {
                 handleSendClick();
             }
         });
-        findViewById(R.id.receive).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                handleReceiveClick();
-            }
-        });
         receivedContent = (TextView) findViewById(R.id.received_content);
         sendMessage = (EditText) findViewById(R.id.send_message);
         profileSpinner = (Spinner) findViewById(R.id.profile);
         receiveStatus = (TextView) findViewById(R.id.receive_status);
         setupProfileSpinner();
         setupTransmitter();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        setupReceiver();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        frameSubscription.unsubscribe();
     }
 
     @Override
@@ -72,8 +81,7 @@ public class MainActivity extends AppCompatActivity {
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    setupReceiver();
-                    receive();
+                    subscribeToFrames();
                 } else {
                     showMissingAudioPermissionToast();
                 }
@@ -95,54 +103,23 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setupReceiver() {
-        try {
-            FrameReceiverConfig receiverConfig = new FrameReceiverConfig(this, getProfile());
-            receiver = new FrameReceiver(receiverConfig);
-            receiver.setBlocking(30, 0);
-            final FrameReceiver receiverClosure = receiver;
-            receiverThread = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    Handler uiHandler = new Handler(getMainLooper());
-                    while (true) {
-                        try {
-                            final byte[] buf = new byte[1024];
-                            final long recvLen = receiverClosure.receive(buf);
-                            uiHandler.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    receivedContent.setText(new String(buf, Charset.forName("UTF-8")));
-                                    Long time = System.currentTimeMillis()/1000;
-                                    String timestamp = time.toString();
-                                    receiveStatus.setText("Received " + recvLen + " @" + timestamp);
-                                }
-                            });
-                        } catch (EOFException e) {
-                            break;
-                        } catch (IOException e) {
-
-                        }
-                    }
-                }
-            });
-            receiverThread.start();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (ModemException e) {
-            throw new RuntimeException(e);
-        }
+        if (hasRecordAudioPersmission()) {
+            subscribeToFrames();
+        } else {
+            requestPermission();
+        };
     }
 
-    private void handleReceiveClick() {
-        if (receiver == null) {
-            if (hasRecordAudioPersmission()) {
-                setupReceiver();
-            } else {
-                requestPermission();
-            }
-        } else {
-            // receive();
-        }
+    private void subscribeToFrames() {
+        frameSubscription.unsubscribe();
+        frameSubscription = FrameReceiverObservable.create(this, getProfile()).subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(buf -> {
+            receivedContent.setText(new String(buf, Charset.forName("UTF-8")));
+            Long time = System.currentTimeMillis() / 1000;
+            String timestamp = time.toString();
+            receiveStatus.setText("Received " + buf.length + " @" + timestamp);
+        }, error-> {
+            receiveStatus.setText("error " + error.toString());
+        });
     }
 
     private void handleSendClick() {
@@ -152,18 +129,6 @@ public class MainActivity extends AppCompatActivity {
         send();
     }
 
-    private void receive() {
-        byte[] buf = new byte[1024];
-        long recvLen = 0;
-        try {
-            recvLen = receiver.receive(buf);
-            receivedContent.setText(new String(buf, Charset.forName("UTF-8")));
-            receiveStatus.setText("Received " + recvLen);
-        } catch (IOException e) {
-            receiveStatus.setText(e.toString());
-        }
-
-    }
     private void send() {
         String payload = sendMessage.getText().toString();
         try {
@@ -219,34 +184,11 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 transmitter = null;
-                if (receiver != null) {
-                    receiver.close();
-                    try {
-                        receiverThread.join();
-                    } catch (InterruptedException e) {
-
-                    }
-                }
-                receiver = null;
-                if (hasRecordAudioPersmission()) {
-                    setupReceiver();
-                } else {
-                    requestPermission();
-                };
+                setupReceiver();
             }
 
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
-                transmitter = null;
-                if (receiver != null) {
-                    receiver.close();
-                    try {
-                        receiverThread.join();
-                    } catch (InterruptedException e) {
-
-                    }
-                }
-                receiver = null;
             }
         });
 
