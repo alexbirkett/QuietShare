@@ -7,6 +7,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -15,7 +16,9 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.EOFException;
 import java.io.IOException;
+import java.net.SocketTimeoutException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -28,6 +31,7 @@ public class MainActivity extends AppCompatActivity {
 
     private FrameReceiver receiver;
     private FrameTransmitter transmitter;
+    private Thread receiverThread;
     private TextView receivedContent;
     private EditText sendMessage;
     private Spinner profileSpinner;
@@ -94,6 +98,34 @@ public class MainActivity extends AppCompatActivity {
         try {
             FrameReceiverConfig receiverConfig = new FrameReceiverConfig(this, getProfile());
             receiver = new FrameReceiver(receiverConfig);
+            receiver.setBlocking(30, 0);
+            final FrameReceiver receiverClosure = receiver;
+            receiverThread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    Handler uiHandler = new Handler(getMainLooper());
+                    while (true) {
+                        try {
+                            final byte[] buf = new byte[1024];
+                            final long recvLen = receiverClosure.receive(buf);
+                            uiHandler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    receivedContent.setText(new String(buf, Charset.forName("UTF-8")));
+                                    Long time = System.currentTimeMillis()/1000;
+                                    String timestamp = time.toString();
+                                    receiveStatus.setText("Received " + recvLen + " @" + timestamp);
+                                }
+                            });
+                        } catch (EOFException e) {
+                            break;
+                        } catch (IOException e) {
+
+                        }
+                    }
+                }
+            });
+            receiverThread.start();
         } catch (IOException e) {
             throw new RuntimeException(e);
         } catch (ModemException e) {
@@ -109,7 +141,7 @@ public class MainActivity extends AppCompatActivity {
                 requestPermission();
             }
         } else {
-            receive();
+            // receive();
         }
     }
 
@@ -189,6 +221,11 @@ public class MainActivity extends AppCompatActivity {
                 transmitter = null;
                 if (receiver != null) {
                     receiver.close();
+                    try {
+                        receiverThread.join();
+                    } catch (InterruptedException e) {
+
+                    }
                 }
                 receiver = null;
                 if (hasRecordAudioPersmission()) {
@@ -201,6 +238,14 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
                 transmitter = null;
+                if (receiver != null) {
+                    receiver.close();
+                    try {
+                        receiverThread.join();
+                    } catch (InterruptedException e) {
+
+                    }
+                }
                 receiver = null;
             }
         });
