@@ -10,16 +10,24 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="no.birkett.quietshare.MainActivity">
 
+    <Spinner
+        android:id="@+id/profile"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <EditText
+        android:id="@+id/message"
+        android:gravity="top"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        tools:text="Message to send"
+        android:layout_below="@id/profile"/>
+
     <Button
         android:id="@+id/transmit"
+        android:layout_below="@id/message"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/button_transmit"/>
 
-    <Button
-        android:id="@+id/receive"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/button_receive"
-        android:layout_toRightOf="@id/transmit"/>
 </RelativeLayout>

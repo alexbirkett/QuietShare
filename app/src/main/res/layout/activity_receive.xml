@@ -10,16 +10,24 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="no.birkett.quietshare.MainActivity">
 
-    <Button
-        android:id="@+id/transmit"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/button_transmit"/>
+    <Spinner
+        android:id="@+id/profile"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
 
-    <Button
-        android:id="@+id/receive"
-        android:layout_width="wrap_content"
+    <TextView
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/button_receive"
-        android:layout_toRightOf="@id/transmit"/>
+        android:text="Received text appears here"
+        android:id="@+id/received_content"
+        android:textAppearance="@style/TextAppearance.AppCompat.Medium"
+        android:layout_below="@+id/profile"/>
+
+    <TextView
+        android:id="@+id/receive_status"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/received_content"/>
+
+
 </RelativeLayout>
