@@ -33,7 +33,7 @@ public class MainActivity extends AppCompatActivity {
     private Spinner profileSpinner;
     private ArrayAdapter<String> spinnerArrayAdapter;
     private TextView receiveStatus;
-    
+
     private static final int MY_PERMISSIONS_REQUEST_RECORD_AUDIO = 1;
 
     @Override
@@ -82,7 +82,6 @@ public class MainActivity extends AppCompatActivity {
         try {
             transmitterConfig = new FrameTransmitterConfig(
                     this,getProfile());
-
             transmitter = new FrameTransmitter(transmitterConfig);
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -122,8 +121,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void receive() {
-        receiver.setBlocking(5, 0);
-
         byte[] buf = new byte[1024];
         long recvLen = 0;
         try {
@@ -190,7 +187,15 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 transmitter = null;
+                if (receiver != null) {
+                    receiver.close();
+                }
                 receiver = null;
+                if (hasRecordAudioPersmission()) {
+                    setupReceiver();
+                } else {
+                    requestPermission();
+                };
             }
 
             @Override
@@ -206,4 +211,4 @@ public class MainActivity extends AppCompatActivity {
         String profile = spinnerArrayAdapter.getItem(profileSpinner.getSelectedItemPosition());
         return profile;
     }
- }
+}
