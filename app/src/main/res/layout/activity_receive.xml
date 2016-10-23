@@ -21,7 +21,8 @@
         android:text="Received text appears here"
         android:id="@+id/received_content"
         android:textAppearance="@style/TextAppearance.AppCompat.Medium"
-        android:layout_below="@+id/profile"/>
+        android:layout_below="@+id/profile"
+        android:autoLink="web"/>
 
     <TextView
         android:id="@+id/receive_status"
