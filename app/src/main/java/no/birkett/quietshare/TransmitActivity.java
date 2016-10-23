@@ -1,5 +1,6 @@
 package no.birkett.quietshare;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -36,6 +37,7 @@ public class TransmitActivity extends AppCompatActivity {
         profileSpinner = (Spinner) findViewById(R.id.profile);
         setupProfileSpinner();
         setupTransmitter();
+        handleDataFromIntent();
     }
 
     @Override
@@ -96,5 +98,20 @@ public class TransmitActivity extends AppCompatActivity {
     private String getProfile() {
         String profile = spinnerArrayAdapter.getItem(profileSpinner.getSelectedItemPosition());
         return profile;
+    }
+
+    private void handleDataFromIntent() {
+
+        Intent intent = getIntent();
+        String action = intent.getAction();
+        String type = intent.getType();
+
+        if (Intent.ACTION_SEND.equals(action) && type != null) {
+            if ("text/plain".equals(type)) {
+                String sharedText = intent.getStringExtra(Intent.EXTRA_TEXT);
+                sendMessage.setText(sharedText);
+            }
+        }
+
     }
 }
